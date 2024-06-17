@@ -30,6 +30,24 @@ async function run() {
     const menuCollection = database.collection("menu");
     const reviewsCollection = database.collection("reviews");
     const addtoCartCollection = database.collection("addtoCart");
+    const usersCollection = database.collection("users");
+
+    //user related api methods
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const findUser = await usersCollection
+        .find({ email: user.email })
+        .toArray();
+      if (findUser.length == 0) {
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      }
+    });
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
     // Get the database
     app.get("/menu", async (req, res) => {
@@ -53,8 +71,8 @@ async function run() {
     });
 
     app.delete("/addtoCart/:id", async (req, res) => {
-      const id = req.params.id; 
-      const query = { _id: new ObjectId(id)};
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const result = await addtoCartCollection.deleteOne(query);
       res.send(result);
     });
