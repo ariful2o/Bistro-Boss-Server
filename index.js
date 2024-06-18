@@ -48,6 +48,18 @@ async function run() {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
+    app.patch("/users/:id",async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.updateOne(query,{$set:req.body});
+      res.send(result);
+    })
+    app.delete('/users/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await usersCollection.deleteOne(query)
+      res.send(result);
+    })
 
     // Get the database
     app.get("/menu", async (req, res) => {
