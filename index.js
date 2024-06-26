@@ -21,7 +21,10 @@ const client = new MongoClient(uri, {
   },
 });
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 691a944 (add menu by admin)
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -36,11 +39,18 @@ async function run() {
 
     //genate a secret key require('crypto').randomBytes(64).toString('hex')
 
+<<<<<<< HEAD
 
     //custom middleware
     //verify token
     const verify = (req, res, next) => {
       // console.log(req.headers.authorization)
+=======
+    //custom middleware
+
+    //verify token
+    const verify = (req, res, next) => {
+>>>>>>> 691a944 (add menu by admin)
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "forbidden" });
       }
@@ -54,6 +64,7 @@ async function run() {
         next();
       });
     };
+<<<<<<< HEAD
 
     //verify admin
     const verifyAdmin = async (req, res, next) => {
@@ -62,13 +73,26 @@ async function run() {
       const query = { email: email };
       const result = await usersCollection.findOne(query)
       if (result.role === "admin") {
+=======
+    //verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded?.user?.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      if (result?.role === "admin") {
+>>>>>>> 691a944 (add menu by admin)
         next();
       } else {
         return res.status(401).send({ message: "forbidden" });
       }
+<<<<<<< HEAD
     }
+=======
+    };
+>>>>>>> 691a944 (add menu by admin)
 
     //jwt related api methods
+
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(
@@ -82,26 +106,32 @@ async function run() {
     });
 
     //user related api methods
-    app.post("/users", async (req, res) => {
+
+    app.post("/users",  async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
-      const findUser = await usersCollection
-        .find({ email: user.email })
-        .toArray();
-      if (findUser.length == 0) {
+      const findUser = await usersCollection.find(query).toArray()
+      if (findUser.length < 1) {
         const result = await usersCollection.insertOne(user);
         res.send(result);
       }
     });
     //check admin for layout
+<<<<<<< HEAD
     app.get("/users/admim/:email", verify, async (req, res) => {
+=======
+    app.get("/users/admim/:email", async (req, res) => {
+>>>>>>> 691a944 (add menu by admin)
       const query = { email: req.params.email };
       const result = await usersCollection.find(query).toArray();
       const isAdmin = result.find((user) => user.role === "admin");
       isAdmin ? res.send(true) : res.send(false);
 
     });
+<<<<<<< HEAD
 
+=======
+>>>>>>> 691a944 (add menu by admin)
     app.get("/users", verify, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
@@ -120,10 +150,16 @@ async function run() {
     });
 
     // Get the database
+
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
+    app.post("/menu",async(req,res)=>{
+      const menu = req.body
+      const result = await menuCollection.insertOne(menu)
+      res.send(result);
+    })
     app.get("/reviews", async (req, res) => {
       const result = await reviewsCollection.find().toArray();
       res.send(result);
