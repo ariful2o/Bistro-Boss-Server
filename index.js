@@ -3,7 +3,9 @@ const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
+
 const port = process.env.PORT || 5000;
 
 //middleware
@@ -32,6 +34,7 @@ async function run() {
     const reviewsCollection = database.collection("reviews");
     const addtoCartCollection = database.collection("addtoCart");
     const usersCollection = database.collection("users");
+    const paymentCollection = database.collection("payments");
 
     //genate a secret key require('crypto').randomBytes(64).toString('hex')
 
@@ -132,6 +135,7 @@ async function run() {
       const result = await menuCollection.insertOne(menu);
       res.send(result);
     });
+
     app.patch("/menu/:id", verify, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const item = req.body;
@@ -147,6 +151,7 @@ async function run() {
       const result = await menuCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
     app.delete("/menu/:id", verify, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -174,6 +179,59 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await addtoCartCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // Payment method intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      const minimumAmount = 1; // Minimum amount in cents (corresponds to $0.50 USD)
+      if (amount < minimumAmount) {
+        return res
+          .status(400)
+          .send({ message: "Amount is below minimum charge amount." });
+      }
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"], // Correct parameter name
+      });
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
+
+    // Payment method intent
+    // app.post("/create-payment-intent", async (req, res) => {
+    //   const { price } = req.body;
+    //   const amount = parseInt(price * 100); // Convert price to cents
+    //   const minimumAmount = 10; // Minimum amount in cents (corresponds to $0.50 USD)
+
+    //   if (amount < minimumAmount) {
+    //     return res.status(400).send({ error: 'Amount is below minimum charge amount.' });
+    //   }
+
+    //   try {
+    //     const paymentIntent = await stripe.paymentIntents.create({
+    //       amount: amount,
+    //       currency: "usd",
+    //       payment_method_types: ["card"],
+    //     });
+    //     res.send({ clientSecret: paymentIntent.client_secret });
+    //   } catch (err) {
+    //     console.error("Error creating payment intent:", err);
+    //     res.status(500).send({ error: 'Failed to create payment intent.' });
+    //   }
+    // });
+
+    app.post("/payment", async (req, res) => {
+      const paymentInfo = req.body;
+      const result = await paymentCollection.insertOne(paymentInfo);
+      const query = {
+        _id: {
+          $in: paymentInfo.addtocardsId.map((id) => new ObjectId(id)),
+        },
+      };
+      const resultDelete = await addtoCartCollection.deleteMany(query);
+      res.send({ result, resultDelete });
     });
 
     // Send a ping to confirm a successful connection
