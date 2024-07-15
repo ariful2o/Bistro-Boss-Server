@@ -182,7 +182,7 @@ async function run() {
     });
 
     // Payment method intent
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", verify, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
       const minimumAmount = 1; // Minimum amount in cents (corresponds to $0.50 USD)
@@ -222,7 +222,7 @@ async function run() {
     //   }
     // });
 
-    app.post("/payment", async (req, res) => {
+    app.post("/payment", verify, async (req, res) => {
       const paymentInfo = req.body;
       const result = await paymentCollection.insertOne(paymentInfo);
       const query = {
@@ -232,6 +232,13 @@ async function run() {
       };
       const resultDelete = await addtoCartCollection.deleteMany(query);
       res.send({ result, resultDelete });
+    });
+
+    app.get("/payment-history/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
