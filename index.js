@@ -235,8 +235,7 @@ async function run() {
     });
 
     app.get("/payment-history/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
+      const email = req.params.email;      const query = { email: email };
       const result = await paymentCollection.find(query).toArray();
       res.send(result);
     });
